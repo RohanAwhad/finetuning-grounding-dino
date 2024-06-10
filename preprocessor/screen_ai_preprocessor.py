@@ -32,15 +32,15 @@ import multiprocessing as mp
 # ===
 # Constants
 # ===
-# ROOT_DIR = '/home/rawhad/personal_jobs/GUI_Detection/rico'
-ROOT_DIR = '/Users/rohan/3_Resources/ai_datasets/rico'
+ROOT_DIR = '/home/rawhad/personal_jobs/GUI_Detection/rico'
+#ROOT_DIR = '/Users/rohan/3_Resources/ai_datasets/rico'
 IMAGE_DIR = os.path.join(ROOT_DIR, 'combined')
 TRAIN_CSV = os.path.join(ROOT_DIR, 'screen_ai', 'train.csv')
 VALID_CSV = os.path.join(ROOT_DIR, 'screen_ai', 'valid.csv')
 TEST_CSV = os.path.join(ROOT_DIR, 'screen_ai', 'test.csv')
 
-# CKPT = "IDEA-Research/grounding-dino-base"
-CKPT = '/Users/rohan/3_Resources/ai_models/grounding-dino-base'
+CKPT = "IDEA-Research/grounding-dino-base"
+#CKPT = '/Users/rohan/3_Resources/ai_models/grounding-dino-base'
 processor = AutoProcessor.from_pretrained(CKPT)
 IMAGE_PROCESSOR = processor.image_processor
 TOKENIZER = processor.tokenizer
@@ -53,7 +53,7 @@ AUGMENT = v2.Compose([
 ])
 
 SHARD_SIZE = 1000
-SAVE_DIR = '/Users/rohan/3_Resources/ai_datasets/rico/screen_ai/processed_data'
+SAVE_DIR = os.path.join(ROOT_DIR, '/screen_ai/processed_data')
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 # ===
@@ -390,6 +390,6 @@ def create_shards(image_id_to_flat_ann, prefix):
       save_shard(fn, shard)
 
 if __name__ == '__main__':
-  #create_shards(valid_image_id_to_flat_ann, 'valid')
-  #create_shards(test_image_id_to_flat_ann, 'test')
+  create_shards(valid_image_id_to_flat_ann, 'valid')
+  create_shards(test_image_id_to_flat_ann, 'test')
   create_shards(train_image_id_to_flat_ann, 'train')
