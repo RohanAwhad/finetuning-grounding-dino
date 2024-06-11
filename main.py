@@ -16,6 +16,7 @@ MODEL_PATH = os.path.join(ROOT_DIR, 'grounding_dino_screen_ai_model')
 
 # create model
 model = AutoModelForZeroShotObjectDetection.from_pretrained(MODEL_CKPT)
+print('Model loaded')
 
 # create optimizer dataloader and scheduler
 max_lr = 3e-4
@@ -68,6 +69,9 @@ GRAD_ACCUM_STEPS = TOTAL_BATCH_SIZE // BATCH_SIZE
 TRAIN_DATALOADER = CustomDataloader('train', 32)
 VALID_DATALOADER = CustomDataloader('valid', 32)
 
+print('Starting training ...')
 engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=20, grad_accum_steps=GRAD_ACCUM_STEPS)
 
+print(f'Saving model to {MODEL_PATH}')
 model.save_pretrained(MODEL_PATH)
+print('Model saved')
