@@ -200,6 +200,7 @@ def process_(image_id, flat_anns):
 
   # crop the images
   transformed_img, transformed_boxes = AUGMENT(img, boxes)
+  transformed_boxes = transformed_boxes.data  # convert back to torch.Tensor object
   # preprocess the image
   img_inp = IMAGE_PROCESSOR(transformed_img, return_tensors='pt')
   pixel_values = img_inp['pixel_values']
