@@ -124,73 +124,75 @@ def common_step(model, batch, device):
   )
     
   with torch.autocast(device_type=device, dtype=torch.bfloat16):
-      outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask, input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+    outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask, input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
 
-      outputs_loss = {}
-      outputs_loss["logits"] = outputs.logits
-      pred_boxes = outputs.pred_boxes
-      # clamp boxes values to 0-1
-      pred_boxes = pred_boxes.clamp_(0, 1)
-      outputs_loss["pred_boxes"] = pred_boxes
+    outputs_loss = {}
+    outputs_loss["logits"] = outputs.logits
+    pred_boxes = outputs.pred_boxes
+    # clamp boxes values to 0-1
+    pred_boxes = pred_boxes.clamp_(0, 1)
+    outputs_loss["pred_boxes"] = pred_boxes
 
 
-      target_labels = batch["target_labels"].to(device)
-      boxes = batch["boxes"].to(device)
+    target_labels = batch["target_labels"].to(device)
+    boxes = batch["boxes"].to(device)
 
-      labels = [{'class_labels': tl[:, 0], 'boxes': bx, 'target_labels': tl} for tl, bx in zip(target_labels, boxes)]
-      loss_dict = criterion(outputs_loss, labels)
-      # compute total loss, as a weighted sum of the various losses
-      weight_dict = {"loss_ce": 1, "loss_bbox": model.config.bbox_loss_coefficient, "loss_giou": model.config.giou_loss_coefficient}
-      loss = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
+    labels = [{'class_labels': tl[:, 0], 'boxes': bx, 'target_labels': tl} for tl, bx in zip(target_labels, boxes)]
+    loss_dict = criterion(outputs_loss, labels)
+    # compute total loss, as a weighted sum of the various losses
+    weight_dict = {"loss_ce": 1, "loss_bbox": model.config.bbox_loss_coefficient, "loss_giou": model.config.giou_loss_coefficient}
+    loss = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
 
   return loss, loss_dict
 
 
-def training_step(model, batch, device, logger):
-  loss, loss_dict = common_step(model, batch, device)
-  # logs metrics for each training_step, and the average across the epoch
-  logger.log({"training_loss": loss})
-  for k,v in loss_dict.items(): logger.log({"train_" + k: v.item()})
-  return loss
-
-@torch.no_grad()
-def validation_step(model, batch, device, logger):
-  loss, loss_dict = common_step(model, batch, device)
-  logger.log({"validation_loss": loss})
-  for k, v in loss_dict.items(): logger.log({"validation_" + k: v.item()})
-  return loss
-
 def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, grad_accum_steps, device, logger):
   model.train()
-  # TODO (rohan): add logging
+  val_steps = 0
 
   for step in range(num_steps):
-
     # validation step
     if step % val_every_n_steps == 0 and val_steps:
       val_loss = 0
+      val_sublosses = {}
       model.eval()
       val_dataloader.reset()
       for i in range(val_steps):
         val_batch = val_dataloader.next_batch()
-        loss = validation_step(model, val_batch, device, logger)
+        with torch.no_grad():
+          loss, loss_dict = common_step(model, val_batch, device)
+
         val_loss += (loss / val_steps).item()
+        for k, v in loss_dict.items():
+          if k not in val_sublosses: val_sublosses[k] = 0
+          val_sublosses[k] += v.item() / val_steps
+
+      val_steps += 1
+      val_sublosses['loss'] = val_loss
+      logger.log({'validation': val_sublosses}, step=val_steps)
       model.train()
       print(f"Step: {step:4d}, Val Loss: {val_loss:.6f}")
 
     # training step
     start = time.monotonic()
     train_loss = 0
+    train_sublosses = {}
     for micro_step in range(grad_accum_steps):
       train_batch = train_dataloader.next_batch()
-      loss = training_step(model, train_batch, device, logger)
+      loss, loss_dict = common_step(model, train_batch, device)
       loss /= grad_accum_steps
       loss.backward()
       train_loss += loss.item()
+      for k, v in loss_dict.items():
+        if k not in train_sublosses: train_sublosses[k] = 0
+        train_sublosses[k] += v.item() / grad_accum_steps
 
     lr = get_lr(step)
     for param_group in optimizer.param_groups: param_group['lr'] = lr
     optimizer.step()
+
+    train_sublosses['loss'] = train_loss
+    logger.log({'train': train_sublosses, 'lr': lr}, step=step)
 
     #torch.cuda.synchronize()
     end = time.monotonic()
