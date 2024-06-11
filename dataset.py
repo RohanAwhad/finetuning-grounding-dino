@@ -25,7 +25,7 @@ class CustomDataloader:
     tti = self.token_type_ids[self.current_idx : self.current_idx + self.batch_size]
     tl = self.target_labels[self.current_idx : self.current_idx + self.batch_size]
     bx = self.boxes[self.current_idx : self.current_idx + self.batch_size]
-    tl, bx = self.collate_labels(tl, bx)
+    tl, bx = self.collate_labels(torch.tensor(tl), torch.tensor(bx))
 
     self.current_idx += self.batch_size
 
@@ -39,8 +39,8 @@ class CustomDataloader:
       'input_ids': torch.tensor(ii, dtype=torch.long),
       'attention_mask': torch.tensor(am, dtype=torch.long),
       'token_type_ids': torch.tensor(tti, dtype=torch.long),
-      'target_labels': torch.tensor(tl, dtype=torch.float),
-      'boxes': torch.tensor(bx, dtype=torch.float),
+      'target_labels': tl.to(torch.float),
+      'boxes': bx.to(torch.float),
     }
 
   def reset(self):
