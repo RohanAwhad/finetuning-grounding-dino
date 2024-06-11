@@ -15,6 +15,7 @@ class CustomDataloader:
     self.batch_size = batch_size
 
     self.files = glob.glob(os.path.join(SAVE_DIR, f'{split}_*.pkl'))
+    self.current_fn = None
     self.reset()
 
   def next_batch(self):
@@ -48,7 +49,9 @@ class CustomDataloader:
     self.load_new_shard()
 
   def load_new_shard(self):
-    self.current_file = load_pickle(self.files[self.file_ptr])
+    if (self.current_fn is None) or (self.files[self.file_ptr] != self.current_fn):  # load new file only if its different
+      self.current_fn = self.files[self.file_ptr]
+      self.current_file = load_pickle(self.current_fn)
 
     self.pixel_values = self.current_file['pixel_values']
     self.pixel_mask = self.current_file['pixel_mask']
