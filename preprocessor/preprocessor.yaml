@@ -4,7 +4,7 @@ channels:
   - conda-forge
 dependencies:
   - pandas
-  - torch
+  - pytorch
   - transformers
   - torchvision>=0.16
   - tqdm
