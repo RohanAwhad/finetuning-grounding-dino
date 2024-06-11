@@ -376,7 +376,7 @@ def create_shards(image_id_to_flat_ann, prefix):
     shard_id = 0
     shard = get_new_shard()
     pbar = tqdm(total=len(image_id_to_flat_ann), desc=f"Creating {prefix} shards")
-    for data in pool.imap_unordered(mp_process_, image_id_to_flat_ann.items(), chunksize=50):
+    for data in pool.imap_unordered(mp_process_, image_id_to_flat_ann.items(), chunksize=200):
       pbar.update(1)
       for k, v in data.items(): shard[k].append(v)
       if len(shard['pixel_values']) == SHARD_SIZE:
