@@ -154,7 +154,7 @@ def training_step(model, batch, device):
 
 @torch.no_grad()
 def validation_step(model, batch, device):
-  loss, loss_dict = model.common_step(model, batch, device)
+  loss, loss_dict = common_step(model, batch, device)
   #self.log("validation/loss", loss)
   #for k, v in loss_dict.items(): self.log("validation_" + k, v.item())
   return loss
