@@ -14,6 +14,10 @@ SAVE_DIR = os.path.join(ROOT_DIR, '/screen_ai/processed_data')
 MODEL_CKPT = "IDEA-Research/grounding-dino-base"
 MODEL_PATH = os.path.join(ROOT_DIR, 'grounding_dino_screen_ai_model')
 
+device = 'cpu'
+if torch.cuda.is_available(): device = 'cuda'
+
+
 # create model
 model = AutoModelForZeroShotObjectDetection.from_pretrained(MODEL_CKPT)
 print('Model loaded')
@@ -70,7 +74,7 @@ TRAIN_DATALOADER = CustomDataloader('train', 32)
 VALID_DATALOADER = CustomDataloader('valid', 32)
 
 print('Starting training ...')
-engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=20, grad_accum_steps=GRAD_ACCUM_STEPS)
+engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=20, grad_accum_steps=GRAD_ACCUM_STEPS, device=device)
 
 print(f'Saving model to {MODEL_PATH}')
 model.save_pretrained(MODEL_PATH)
