@@ -4,6 +4,7 @@ torch.set_float32_matmul_precision('high')
 import math
 import os
 import torch
+import wandb
 
 from transformers import AutoModelForZeroShotObjectDetection
 
@@ -22,7 +23,7 @@ if torch.cuda.is_available(): device = 'cuda'
 
 
 # create optimizer dataloader and scheduler
-max_lr = 3e-4
+max_lr = 3e-5
 min_lr = max_lr * 0.1
 warmup_steps = 92 # 0.037 * 2500
 max_steps = 2500
@@ -79,7 +80,10 @@ model.to(device)
 optimizer = configure_optimizers(max_lr, 0.01, model)
 
 print('Starting training ...')
+# setup wandb logger
+wandb.init(project="grounding-dino-screen-ai", name='test-2')
 engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=0, grad_accum_steps=GRAD_ACCUM_STEPS, device=device)
+wandb.finish()
 
 print(f'Saving model to {MODEL_PATH}')
 model.cpu()
