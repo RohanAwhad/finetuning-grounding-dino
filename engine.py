@@ -146,21 +146,21 @@ def common_step(model, batch, device):
   return loss, loss_dict
 
 
-def training_step(model, batch, device):
+def training_step(model, batch, device, logger):
   loss, loss_dict = common_step(model, batch, device)
   # logs metrics for each training_step, and the average across the epoch
-  #self.log("training_loss", loss)
-  #for k,v in loss_dict.items(): self.log("train_" + k, v.item())
+  logger.log("training_loss", loss)
+  for k,v in loss_dict.items(): logger.log("train_" + k, v.item())
   return loss
 
 @torch.no_grad()
-def validation_step(model, batch, device):
+def validation_step(model, batch, device, logger):
   loss, loss_dict = common_step(model, batch, device)
-  #self.log("validation/loss", loss)
-  #for k, v in loss_dict.items(): self.log("validation_" + k, v.item())
+  logger.log("validation/loss", loss)
+  for k, v in loss_dict.items(): logger.log("validation_" + k, v.item())
   return loss
 
-def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, device, grad_accum_steps=1):
+def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, grad_accum_steps, device, logger):
   model.train()
   # TODO (rohan): add logging
 
@@ -173,7 +173,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
       val_dataloader.reset()
       for i in range(val_steps):
         val_batch = val_dataloader.next_batch()
-        loss = validation_step(model, val_batch, device)
+        loss = validation_step(model, val_batch, device, logger)
         val_loss += (loss / val_steps).item()
       model.train()
       print(f"Step: {step:4d}, Val Loss: {val_loss:.6f}, LR: {lr:.2e} Time Taken: {end - start:.2f} secs")
@@ -183,7 +183,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
     train_loss = 0
     for micro_step in range(grad_accum_steps):
       train_batch = train_dataloader.next_batch()
-      loss = training_step(model, train_batch, device)
+      loss = training_step(model, train_batch, device, logger)
       loss /= grad_accum_steps
       loss.backward()
       train_loss += loss.item()
