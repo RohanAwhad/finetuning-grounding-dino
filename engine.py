@@ -300,13 +300,12 @@ def common_step(model, batch, device):
   return loss, loss_dict
 
 
-def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, grad_accum_steps, device, logger):
+def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, grad_accum_steps, device, logger, model_path):
   model.train()
-  val_steps = 0
 
   for step in range(num_steps):
     # validation step
-    if step % val_every_n_steps == 0 and val_steps:
+    if (step % val_every_n_steps == 0) and (val_steps > 0):
       val_loss = 0
       val_sublosses = {}
       model.eval()
@@ -321,10 +320,10 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
           if k not in val_sublosses: val_sublosses[k] = 0
           val_sublosses[k] += v.item() / val_steps
 
-      val_steps += 1
       val_sublosses['loss'] = val_loss
-      logger.log({'validation': val_sublosses}, step=val_steps)
+      logger.log({'validation': val_sublosses}, step=step)
       model.train()
+      model.save_pretrained(model_path)
       print(f"Step: {step:4d}, Val Loss: {val_loss:.6f}")
 
     # training step
@@ -352,3 +351,4 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
     end = time.monotonic()
 
     print(f"Step: {step:4d}, Train Loss: {train_loss:.6f}, LR: {lr:.2e} Time Taken: {end - start:.2f} secs")
+
