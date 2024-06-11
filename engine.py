@@ -16,6 +16,7 @@ from transformers.models.grounding_dino.modeling_grounding_dino import Grounding
 # ===
 # Loss function
 # ===
+# add to add the GroundingDinoHungarianMatcher class to deal with cost_matrix containing nan values
 import torch.nn as nn
 from transformers.image_transforms import center_to_corners_format
 from scipy.optimize import linear_sum_assignment
@@ -44,7 +45,6 @@ def box_area(boxes: torch.Tensor) -> torch.Tensor:
     """
     boxes = _upcast(boxes)
     return (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
-
 
 # Copied from transformers.models.detr.modeling_detr.box_iou
 def box_iou(boxes1, boxes2):
@@ -300,7 +300,22 @@ def common_step(model, batch, device):
   return loss, loss_dict
 
 
-def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, grad_accum_steps, device, logger, model_path):
+def run(
+  model,
+  train_dataloader,
+  val_dataloader,
+  optimizer,
+  get_lr,
+  num_steps,
+  val_every_n_steps,
+  val_steps,
+  grad_accum_steps,
+  device,
+  logger,
+  model_path,
+  overfit_batch: bool = False
+):
+
   model.train()
 
   for step in range(num_steps):
@@ -349,6 +364,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
 
     #torch.cuda.synchronize()
     end = time.monotonic()
+    if overfit_batch: train_dataloader.reset()
 
     print(f"Step: {step:4d}, Train Loss: {train_loss:.6f}, LR: {lr:.2e} Time Taken: {end - start:.2f} secs")
 
