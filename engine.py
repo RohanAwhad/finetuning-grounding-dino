@@ -336,7 +336,7 @@ def run(
           val_sublosses[k] += v.item() / val_steps
 
       val_sublosses['loss'] = val_loss
-      logger.log({'validation': val_sublosses}, step=step)
+      if logger is not None: logger.log({'validation': val_sublosses}, step=step)
       model.train()
       model.save_pretrained(model_path)
       print(f"Step: {step:4d}, Val Loss: {val_loss:.6f}")
@@ -360,7 +360,7 @@ def run(
     optimizer.step()
 
     train_sublosses['loss'] = train_loss
-    logger.log({'train': train_sublosses, 'lr': lr}, step=step)
+    if logger is not None: logger.log({'train': train_sublosses, 'lr': lr}, step=step)
 
     #torch.cuda.synchronize()
     end = time.monotonic()
