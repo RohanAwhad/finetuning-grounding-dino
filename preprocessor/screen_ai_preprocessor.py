@@ -54,7 +54,7 @@ AUGMENT = v2.Compose([
 ])
 
 SHARD_SIZE = 1000
-SAVE_DIR = os.path.join(ROOT_DIR, '/screen_ai/processed_data')
+SAVE_DIR = os.path.join('/scratch/rawhad/datasets', '/screen_ai/processed_data')
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 # ===
