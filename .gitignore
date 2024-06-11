@@ -1,1 +1,4 @@
 *.swp
+wandb
+slurm*
+__pycache__
