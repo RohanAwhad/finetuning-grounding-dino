@@ -149,15 +149,15 @@ def common_step(model, batch, device):
 def training_step(model, batch, device, logger):
   loss, loss_dict = common_step(model, batch, device)
   # logs metrics for each training_step, and the average across the epoch
-  logger.log("training_loss", loss)
-  for k,v in loss_dict.items(): logger.log("train_" + k, v.item())
+  logger.log({"training_loss": loss})
+  for k,v in loss_dict.items(): logger.log({"train_" + k: v.item()})
   return loss
 
 @torch.no_grad()
 def validation_step(model, batch, device, logger):
   loss, loss_dict = common_step(model, batch, device)
-  logger.log("validation/loss", loss)
-  for k, v in loss_dict.items(): logger.log("validation_" + k, v.item())
+  logger.log({"validation_loss": loss})
+  for k, v in loss_dict.items(): logger.log({"validation_" + k: v.item()})
   return loss
 
 def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, grad_accum_steps, device, logger):
