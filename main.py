@@ -64,7 +64,7 @@ def configure_optimizers(lr, weight_decay, model):
   return optimizer
 
 TOTAL_BATCH_SIZE = 32
-BATCH_SIZE = 4
+BATCH_SIZE = 8
 assert TOTAL_BATCH_SIZE % BATCH_SIZE == 0, "Total batch size must be divisible by batch size"
 GRAD_ACCUM_STEPS = TOTAL_BATCH_SIZE // BATCH_SIZE
 
@@ -81,9 +81,9 @@ optimizer = configure_optimizers(max_lr, 0.01, model)
 
 print('Starting training ...')
 # setup wandb logger
-wandb.init(project="grounding-dino-screen-ai", name='test-2')
+#wandb.init(project="grounding-dino-screen-ai", name='test-2')
 engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=0, grad_accum_steps=GRAD_ACCUM_STEPS, device=device)
-wandb.finish()
+#wandb.finish()
 
 print(f'Saving model to {MODEL_PATH}')
 model.cpu()

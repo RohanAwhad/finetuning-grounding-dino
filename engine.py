@@ -176,6 +176,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
         loss = validation_step(model, val_batch, device)
         val_loss += (loss / val_steps).item()
       model.train()
+      print(f"Step: {step:4d}, Val Loss: {val_loss:.6f}, LR: {lr:.2e} Time Taken: {end - start:.2f} secs")
 
     # training step
     start = time.monotonic()
@@ -194,4 +195,4 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
     torch.cuda.synchronize()
     end = time.monotonic()
 
-    print(f"Step: {step:4d}, Train Loss: {train_loss:.6f}, LR: {lr:.6f} Time Taken: {end - start:.2f} secs")
+    print(f"Step: {step:4d}, Train Loss: {train_loss:.6f}, LR: {lr:.2e} Time Taken: {end - start:.2f} secs")
