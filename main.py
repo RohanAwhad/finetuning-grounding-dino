@@ -58,7 +58,7 @@ def configure_optimizers(lr, weight_decay, model):
   # if fused AdamW is installed, use it
   import inspect
   fused_available = 'fused' in inspect.signature(torch.optim.AdamW).parameters
-  use_fused = fused_available # and 'cuda' in self.device cannot access self.device here
+  use_fused = fused_available and 'cuda' in device
   print('Using fused AdamW:', use_fused)
   optimizer = torch.optim.AdamW(optim_groups, lr=lr, eps=1e-8, fused=use_fused)
   return optimizer
