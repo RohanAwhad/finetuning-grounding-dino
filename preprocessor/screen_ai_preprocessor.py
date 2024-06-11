@@ -230,11 +230,11 @@ def process_(image_id, flat_anns):
   assert target_labels.shape[1] == 2, f"Expected 2 columns, got {target_labels.shape[1]}"
   
   return dict(
-    input_ids = input_ids.squeeze(0),
-    attention_mask = attention_mask.squeeze(0),
-    token_type_ids = token_type_ids.squeeze(0),
-    pixel_values = pixel_values.squeeze(0),
-    pixel_mask = pixel_mask.squeeze(0),
+    input_ids = input_ids,
+    attention_mask = attention_mask,
+    token_type_ids = token_type_ids,
+    pixel_values = pixel_values,
+    pixel_mask = pixel_mask,
     boxes = transformed_boxes.to(torch.float),
     target_labels = target_labels,
     n_boxes = torch.tensor([transformed_boxes.shape[0], ], dtype=torch.long),
