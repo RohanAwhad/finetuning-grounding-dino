@@ -95,8 +95,8 @@ class CustomDataloader:
       pad = torch.tensor([boxes_pad]*4).expand(max_boxes-n_boxes, -1)
       b = torch.concatenate((torch.tensor(b), pad), axis=0)
 
-      ret['target_labels'].append(target_labels.unsqueeze(0))
-      ret['boxes'].append(boxes.unsqueeze(0))
+      ret['target_labels'].append(tl.unsqueeze(0))
+      ret['boxes'].append(b.unsqueeze(0))
 
     ret = {k: torch.vstack(v) for k, v in ret.items()}
     return ret['target_labels'], ret['boxes']
