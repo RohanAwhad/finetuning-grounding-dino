@@ -4,9 +4,6 @@ import pickle
 import torch
 
 SAVE_DIR = os.path.join('/scratch/rawhad/datasets', 'screen_ai/processed_data')
-TRAIN_PREFIX = 'train_'
-VALID_PREFIX = 'valid_'
-TEST_PREFIX = 'test_'
 
 
 def load_pickle(file_path):
