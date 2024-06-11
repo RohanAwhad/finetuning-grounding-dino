@@ -81,7 +81,7 @@ optimizer = configure_optimizers(max_lr, 0.01, model)
 
 print('Starting training ...')
 # setup wandb logger
-wandb.init(project="grounding-dino-screen-ai", name='test-3')
+wandb.init(project="grounding-dino-screen-ai", name='test-4')
 engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=20, grad_accum_steps=GRAD_ACCUM_STEPS, device=device, logger=wandb, model_path=MODEL_PATH)
 wandb.finish()
 
