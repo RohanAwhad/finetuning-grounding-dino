@@ -1,3 +1,6 @@
+import torch
+torch.set_float32_matmul_precision('high')
+
 import math
 import os
 import torch
@@ -64,8 +67,8 @@ BATCH_SIZE = 4
 assert TOTAL_BATCH_SIZE % BATCH_SIZE == 0, "Total batch size must be divisible by batch size"
 GRAD_ACCUM_STEPS = TOTAL_BATCH_SIZE // BATCH_SIZE
 
-TRAIN_DATALOADER = CustomDataloader('train', 32)
-VALID_DATALOADER = CustomDataloader('valid', 32)
+TRAIN_DATALOADER = CustomDataloader('train', BATCH_SIZE)
+VALID_DATALOADER = CustomDataloader('valid', BATCH_SIZE)
 
 
 # create model
@@ -76,7 +79,7 @@ model.to(device)
 optimizer = configure_optimizers(max_lr, 0.01, model)
 
 print('Starting training ...')
-engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=20, grad_accum_steps=GRAD_ACCUM_STEPS, device=device)
+engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=0, grad_accum_steps=GRAD_ACCUM_STEPS, device=device)
 
 print(f'Saving model to {MODEL_PATH}')
 model.cpu()

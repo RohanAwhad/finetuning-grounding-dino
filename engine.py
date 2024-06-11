@@ -7,6 +7,7 @@ Engine will have following functions
 run() Another function that actually runs the training and validation steps
 """
 
+import time
 import torch
 import torch.nn.functional as F
 
@@ -108,8 +109,6 @@ def common_step(model, batch, device):
   input_ids = batch["input_ids"].to(device)
   attention_mask = batch["attention_mask"].to(device)
   token_type_ids = batch["token_type_ids"].to(device)
-    
-  outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask, input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
 
   # loss function
   matcher = GroundingDinoHungarianMatcher(
@@ -123,24 +122,26 @@ def common_step(model, batch, device):
     focal_alpha=model.config.focal_alpha,
     losses=losses,
   )
+    
+  with torch.autocast(device_type=device, dtype=torch.bfloat16):
+      outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask, input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
 
-  outputs_loss = {}
-  outputs_loss["logits"] = outputs.logits
-  pred_boxes = outputs.pred_boxes
-  # clamp boxes values to 0-1
-  pred_boxes = pred_boxes.clamp_(0, 1)
-  outputs_loss["pred_boxes"] = pred_boxes
+      outputs_loss = {}
+      outputs_loss["logits"] = outputs.logits
+      pred_boxes = outputs.pred_boxes
+      # clamp boxes values to 0-1
+      pred_boxes = pred_boxes.clamp_(0, 1)
+      outputs_loss["pred_boxes"] = pred_boxes
 
 
-  target_labels = batch["target_labels"].to(device)
-  boxes = batch["boxes"].to(device)
+      target_labels = batch["target_labels"].to(device)
+      boxes = batch["boxes"].to(device)
 
-  labels = [{'class_labels': tl[:, 0], 'boxes': bx, 'target_labels': tl} for tl, bx in zip(target_labels, boxes)]
-  loss_dict = criterion(outputs_loss, labels)
-
-  # compute total loss, as a weighted sum of the various losses
-  weight_dict = {"loss_ce": 1, "loss_bbox": model.config.bbox_loss_coefficient, "loss_giou": model.config.giou_loss_coefficient}
-  loss = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
+      labels = [{'class_labels': tl[:, 0], 'boxes': bx, 'target_labels': tl} for tl, bx in zip(target_labels, boxes)]
+      loss_dict = criterion(outputs_loss, labels)
+      # compute total loss, as a weighted sum of the various losses
+      weight_dict = {"loss_ce": 1, "loss_bbox": model.config.bbox_loss_coefficient, "loss_giou": model.config.giou_loss_coefficient}
+      loss = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
 
   return loss, loss_dict
 
@@ -166,8 +167,8 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
   for step in range(num_steps):
 
     # validation step
-    val_loss = 0
-    if step % val_every_n_steps == 0:
+    if step % val_every_n_steps == 0 and val_steps:
+      val_loss = 0
       model.eval()
       val_dataloader.reset()
       for i in range(val_steps):
@@ -177,6 +178,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
       model.train()
 
     # training step
+    start = time.monotonic()
     train_loss = 0
     for micro_step in range(grad_accum_steps):
       train_batch = train_dataloader.next_batch()
@@ -189,4 +191,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
     for param_group in optimizer.param_groups: param_group['lr'] = lr
     optimizer.step()
 
-    print(f"Step: {step:4d}, Train Loss: {train_loss:.6f}, LR: {lr:.6f}")
+    torch.cuda.synchronize()
+    end = time.monotonic()
+
+    print(f"Step: {step:4d}, Train Loss: {train_loss:.6f}, LR: {lr:.6f} Time Taken: {end - start:.2f} secs")
