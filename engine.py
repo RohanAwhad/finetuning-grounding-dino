@@ -102,12 +102,12 @@ class ModifiedGDL(GroundingDinoLoss):
 # ===
 # Training and Validation Steps
 # ===
-def common_step(model, batch):
-  pixel_values = batch["pixel_values"]
-  pixel_mask = batch["pixel_mask"]
-  input_ids = batch["input_ids"]
-  attention_mask = batch["attention_mask"]
-  token_type_ids = batch["token_type_ids"]
+def common_step(model, batch, device):
+  pixel_values = batch["pixel_values"].to(device)
+  pixel_mask = batch["pixel_mask"].to(device)
+  input_ids = batch["input_ids"].to(device)
+  attention_mask = batch["attention_mask"].to(device)
+  token_type_ids = batch["token_type_ids"].to(device)
     
   outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask, input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
 
@@ -145,21 +145,21 @@ def common_step(model, batch):
   return loss, loss_dict
 
 
-def training_step(model, batch):
-  loss, loss_dict = common_step(model, batch)
+def training_step(model, batch, device):
+  loss, loss_dict = common_step(model, batch, device)
   # logs metrics for each training_step, and the average across the epoch
   #self.log("training_loss", loss)
   #for k,v in loss_dict.items(): self.log("train_" + k, v.item())
   return loss
 
 @torch.no_grad()
-def validation_step(model, batch):
-  loss, loss_dict = model.common_step(model, batch)
+def validation_step(model, batch, device):
+  loss, loss_dict = model.common_step(model, batch, device)
   #self.log("validation/loss", loss)
   #for k, v in loss_dict.items(): self.log("validation_" + k, v.item())
   return loss
 
-def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, grad_accum_steps=1):
+def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, device, grad_accum_steps=1):
   model.train()
   # TODO (rohan): add logging
 
@@ -172,7 +172,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
       val_dataloader.reset()
       for i in range(val_steps):
         val_batch = val_dataloader.next_batch()
-        loss = validation_step(model, val_batch, i)
+        loss = validation_step(model, val_batch, device)
         val_loss += (loss / val_steps).item()
       model.train()
 
@@ -180,7 +180,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
     train_loss = 0
     for micro_step in range(grad_accum_steps):
       train_batch = train_dataloader.next_batch()
-      loss = training_step(model, train_batch)
+      loss = training_step(model, train_batch, device)
       loss /= grad_accum_steps
       loss.backward()
       train_loss += loss.item()
