@@ -18,10 +18,6 @@ device = 'cpu'
 if torch.cuda.is_available(): device = 'cuda'
 
 
-# create model
-model = AutoModelForZeroShotObjectDetection.from_pretrained(MODEL_CKPT)
-print('Model loaded')
-
 # create optimizer dataloader and scheduler
 max_lr = 3e-4
 min_lr = max_lr * 0.1
@@ -63,9 +59,6 @@ def configure_optimizers(lr, weight_decay, model):
   optimizer = torch.optim.AdamW(optim_groups, lr=lr, eps=1e-8, fused=use_fused)
   return optimizer
 
-model.to(device)
-optimizer = configure_optimizers(max_lr, 0.01, model)
-
 TOTAL_BATCH_SIZE = 32
 BATCH_SIZE = 4
 assert TOTAL_BATCH_SIZE % BATCH_SIZE == 0, "Total batch size must be divisible by batch size"
@@ -73,6 +66,14 @@ GRAD_ACCUM_STEPS = TOTAL_BATCH_SIZE // BATCH_SIZE
 
 TRAIN_DATALOADER = CustomDataloader('train', 32)
 VALID_DATALOADER = CustomDataloader('valid', 32)
+
+
+# create model
+model = AutoModelForZeroShotObjectDetection.from_pretrained(MODEL_CKPT)
+print('Model loaded')
+
+model.to(device)
+optimizer = configure_optimizers(max_lr, 0.01, model)
 
 print('Starting training ...')
 engine.run(model, TRAIN_DATALOADER, VALID_DATALOADER, optimizer, get_lr, num_steps=max_steps, val_every_n_steps=200, val_steps=20, grad_accum_steps=GRAD_ACCUM_STEPS, device=device)

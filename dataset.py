@@ -60,10 +60,13 @@ class CustomDataloader:
     boxes = self.current_file['boxes']
     n_boxes = self.current_file['n_boxes']
 
+
     self.target_labels = []
     self.boxes = []
     offset = 0
+    print(n_boxes.shape)
     for n in n_boxes:
+      print(n)
       self.target_labels.append(target_labels[offset:offset+n])
       self.boxes.append(boxes[offset:offset+n])
       offset += n
