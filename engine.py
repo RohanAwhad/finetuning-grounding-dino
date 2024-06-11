@@ -160,6 +160,7 @@ def validation_step(model, batch):
   return loss
 
 def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, val_every_n_steps, val_steps, grad_accum_steps=1):
+  model.train()
   # TODO (rohan): add logging
 
   for step in range(num_steps):
@@ -187,3 +188,5 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
     lr = get_lr(step)
     for param_group in optimizer.param_groups: param_group['lr'] = lr
     optimizer.step()
+
+    print(f"Step: {step:4d}, Train Loss: {train_loss:.6f}, LR: {lr:.6f}")
