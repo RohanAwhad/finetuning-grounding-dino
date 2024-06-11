@@ -39,7 +39,7 @@ class CustomDataloader:
       'input_ids': torch.tensor(ii, dtype=torch.long),
       'attention_mask': torch.tensor(am, dtype=torch.long),
       'token_type_ids': torch.tensor(tti, dtype=torch.long),
-      'target_labels': tl.to(torch.float),
+      'target_labels': tl.to(torch.long),
       'boxes': bx.to(torch.float),
     }
 
