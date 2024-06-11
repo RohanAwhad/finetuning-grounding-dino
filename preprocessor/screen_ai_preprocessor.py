@@ -371,7 +371,8 @@ def mp_process_(x): return process_(*x)
 
 
 def create_shards(image_id_to_flat_ann, prefix):
-  with mp.Pool(2) as pool:
+  n_procs = os.cpu_count() * 2  # to utiilze threading too
+  with mp.Pool(n_procs) as pool:
     shard_id = 0
     shard = get_new_shard()
     pbar = tqdm(total=len(image_id_to_flat_ann), desc=f"Creating {prefix} shards")
