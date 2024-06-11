@@ -176,7 +176,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
         loss = validation_step(model, val_batch, device, logger)
         val_loss += (loss / val_steps).item()
       model.train()
-      print(f"Step: {step:4d}, Val Loss: {val_loss:.6f}, LR: {lr:.2e} Time Taken: {end - start:.2f} secs")
+      print(f"Step: {step:4d}, Val Loss: {val_loss:.6f}")
 
     # training step
     start = time.monotonic()
@@ -192,7 +192,7 @@ def run(model, train_dataloader, val_dataloader, optimizer, get_lr, num_steps, v
     for param_group in optimizer.param_groups: param_group['lr'] = lr
     optimizer.step()
 
-    torch.cuda.synchronize()
+    #torch.cuda.synchronize()
     end = time.monotonic()
 
     print(f"Step: {step:4d}, Train Loss: {train_loss:.6f}, LR: {lr:.2e} Time Taken: {end - start:.2f} secs")
