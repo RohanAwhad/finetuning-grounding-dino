@@ -371,12 +371,12 @@ def mp_process_(x): return process_(*x)
 
 
 def create_shards(image_id_to_flat_ann, prefix):
-  n_procs = os.cpu_count() * 2  # to utiilze threading too
+  n_procs = os.cpu_count() - 1
   with mp.Pool(n_procs) as pool:
     shard_id = 0
     shard = get_new_shard()
     pbar = tqdm(total=len(image_id_to_flat_ann), desc=f"Creating {prefix} shards")
-    for data in pool.imap_unordered(mp_process_, image_id_to_flat_ann.items(), chunksize=200):
+    for data in pool.imap_unordered(mp_process_, image_id_to_flat_ann.items(), chunksize=50):
       pbar.update(1)
       for k, v in data.items(): shard[k].append(v)
       if len(shard['pixel_values']) == SHARD_SIZE:
