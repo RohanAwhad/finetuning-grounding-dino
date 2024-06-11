@@ -58,7 +58,7 @@ class CustomDataloader:
 
     target_labels = self.current_file['target_labels']
     boxes = self.current_file['boxes']
-    n_boxes = self.current_file['n_boxes']
+    n_boxes = self.current_file['n_boxes'].reshape(-1)
 
 
     self.target_labels = []
