@@ -132,8 +132,8 @@ def common_step(model, batch, device):
   outputs_loss["pred_boxes"] = pred_boxes
 
 
-  target_labels = batch["target_labels"]
-  boxes = batch["boxes"]
+  target_labels = batch["target_labels"].to(device)
+  boxes = batch["boxes"].to(device)
 
   labels = [{'class_labels': tl[:, 0], 'boxes': bx, 'target_labels': tl} for tl, bx in zip(target_labels, boxes)]
   loss_dict = criterion(outputs_loss, labels)
