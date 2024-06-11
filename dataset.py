@@ -25,6 +25,8 @@ class CustomDataloader:
     tti = self.token_type_ids[self.current_idx : self.current_idx + self.batch_size]
     tl = self.target_labels[self.current_idx : self.current_idx + self.batch_size]
     bx = self.boxes[self.current_idx : self.current_idx + self.batch_size]
+    tl, bx = self.collate_labels(tl, bx)
+
     self.current_idx += self.batch_size
 
     if self.current_idx >= self.pixel_values.shape[0]:
@@ -53,10 +55,47 @@ class CustomDataloader:
     self.input_ids = self.current_file['input_ids']
     self.attention_mask = self.current_file['attention_mask']
     self.token_type_ids = self.current_file['token_type_ids']
-    self.target_labels = self.current_file['target_labels']
-    self.boxes = self.current_file['boxes']
-    self.n_boxes = self.current_file['n_boxes']
 
-    self.target_labels = self.target_labels.reshape(-1, self.n_boxes, self.target_labels.shape[-1])
-    self.boxes = self.boxes.reshape(-1, self.n_boxes, self.boxes.shape[-1])
+    target_labels = self.current_file['target_labels']
+    boxes = self.current_file['boxes']
+    n_boxes = self.current_file['n_boxes']
+
+    self.target_labels = []
+    self.boxes = []
+    offset = 0
+    for n in n_boxes:
+      self.target_labels.append(target_labels[offset:offset+n])
+      self.boxes.append(boxes[offset:offset+n])
+      offset += n
+
     self.current_idx = 0
+
+
+  def collate_labels(self, target_labels, boxes):
+    max_boxes = 0
+
+    for tl, b in zip(target_labels, boxes):
+      n_boxes = tl.shape[0]
+      if n_boxes > max_boxes: max_boxes = n_boxes
+
+    boxes_pad = 0
+    target_labels_pad = (255, 256) # (max_len, max_len+1)
+
+    ret = {
+      'target_labels': [],
+      'boxes': [],
+    }
+
+    for tl, b in zip(target_labels, boxes):
+      n_boxes = tl.shape[0]
+      pad = torch.tensor(target_labels_pad).expand(max_boxes-n_boxes, -1)
+      tl = torch.concatenate((tl, pad), axis=0)
+
+      pad = torch.tensor([boxes_pad]*4).expand(max_boxes-n_boxes, -1)
+      b = torch.concatenate((b, pad), axis=0)
+
+      ret['target_labels'].append(target_labels.unsqueeze(0))
+      ret['boxes'].append(boxes.unsqueeze(0))
+
+    ret = {k: torch.vstack(v) for k, v in ret.items()}
+    return ret['target_labels'], ret['boxes']
