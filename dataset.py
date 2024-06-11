@@ -25,7 +25,7 @@ class CustomDataloader:
     tti = self.token_type_ids[self.current_idx : self.current_idx + self.batch_size]
     tl = self.target_labels[self.current_idx : self.current_idx + self.batch_size]
     bx = self.boxes[self.current_idx : self.current_idx + self.batch_size]
-    tl, bx = self.collate_labels(torch.tensor(tl), torch.tensor(bx))
+    tl, bx = self.collate_labels(tl, bx)
 
     self.current_idx += self.batch_size
 
@@ -90,10 +90,10 @@ class CustomDataloader:
     for tl, b in zip(target_labels, boxes):
       n_boxes = tl.shape[0]
       pad = torch.tensor(target_labels_pad).expand(max_boxes-n_boxes, -1)
-      tl = torch.concatenate((tl, pad), axis=0)
+      tl = torch.concatenate((torch.tensor(tl), pad), axis=0)
 
       pad = torch.tensor([boxes_pad]*4).expand(max_boxes-n_boxes, -1)
-      b = torch.concatenate((b, pad), axis=0)
+      b = torch.concatenate((torch.tensor(b), pad), axis=0)
 
       ret['target_labels'].append(target_labels.unsqueeze(0))
       ret['boxes'].append(boxes.unsqueeze(0))
