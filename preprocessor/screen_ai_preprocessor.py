@@ -13,20 +13,21 @@ How do I want to store the encoded data?
 100 images per file (for now)
 Different folders for each epoch only for training set
 """
-import pickle
-from PIL import Image
-from dataclasses import dataclass
+import multiprocessing as mp
 import os
+import pandas as pd
+import pickle
 import random
 import re
-from typing import Optional
-import pandas as pd
 import torch
+
+from dataclasses import dataclass
+from PIL import Image
+from torchvision import tv_tensors
 from torchvision.transforms import v2
 from tqdm import tqdm
 from transformers import AutoProcessor
-from torchvision import tv_tensors
-import multiprocessing as mp
+from typing import Optional
 
 
 # ===

@@ -1,0 +1,11 @@
+name: finetuning-grounding-dino-preprocessor-env
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - pandas
+  - torch
+  - transformers
+  - torchvision>=0.16
+  - tqdm
+  - pillow
