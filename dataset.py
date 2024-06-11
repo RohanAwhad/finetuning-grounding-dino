@@ -57,6 +57,6 @@ class CustomDataloader:
     self.boxes = self.current_file['boxes']
     self.n_boxes = self.current_file['n_boxes']
 
-    self.target_labels = self.target_labels.view(-1, self.n_boxes, self.target_labels.shape[-1])
-    self.boxes = self.boxes.view(-1, self.n_boxes, self.boxes.shape[-1])
+    self.target_labels = self.target_labels.reshape(-1, self.n_boxes, self.target_labels.shape[-1])
+    self.boxes = self.boxes.reshape(-1, self.n_boxes, self.boxes.shape[-1])
     self.current_idx = 0
