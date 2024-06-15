@@ -223,13 +223,12 @@ class ModifiedGDL(GroundingDinoLoss):
       if "logits" not in outputs:
           raise KeyError("No logits were found in the outputs")
       source_logits = outputs["logits"]
-      batch_size, num_boxes = source_logits.shape[:2]
 
       idx = self._get_source_permutation_idx(indices)
-      target_classes_o = torch.cat([t["target_labels"][J] for t, (_, J) in zip(targets, indices)])
-
-      target_classes = torch.full((batch_size, num_boxes, self.num_classes), self.max_len, dtype=torch.int64, device=source_logits.device)
-      target_classes[:, :, 1] += 1
+      target_classes_o = torch.cat([t["class_labels"][J] for t, (_, J) in zip(targets, indices)])
+      target_classes = torch.full(
+          source_logits.shape[:2], self.num_classes, dtype=torch.int64, device=source_logits.device
+      )
       target_classes[idx] = target_classes_o
 
       target_classes_onehot = torch.zeros(
@@ -238,11 +237,7 @@ class ModifiedGDL(GroundingDinoLoss):
           layout=source_logits.layout,
           device=source_logits.device,
       )
-
-      for b in range(batch_size):
-        for q in range(num_boxes):  # or num_boxes which is 900
-          start_idx, end_idx = target_classes[b, q]
-          target_classes_onehot[b, q, start_idx: end_idx] = 1
+      target_classes_onehot.scatter_(2, target_classes.unsqueeze(-1), 1)
 
       target_classes_onehot = target_classes_onehot[:, :, :-1]
       loss_ce = (
